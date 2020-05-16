@@ -29,5 +29,5 @@
         index: test
         id: 1
   - match: { _source.field1: "my_value" }
-  - match: { _source.field2: "my_value" }
+  - match: { _source.field2: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
 

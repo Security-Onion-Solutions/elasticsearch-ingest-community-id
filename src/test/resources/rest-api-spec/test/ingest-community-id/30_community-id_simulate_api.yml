@@ -24,4 +24,4 @@
 
   - length: { docs.0.doc._source: 2 }
   - match: { docs.0.doc._source.field1: "some content here" }
-  - match: { docs.0.doc._source.field2: "some content here" }
+  - match: { docs.0.doc._source.field2: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
