@@ -25,29 +25,37 @@ import org.elasticsearch.ingest.Processor;
 
 import java.net.InetAddress;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.elasticsearch.ingest.ConfigurationUtils.readStringProperty;
+import static org.elasticsearch.ingest.ConfigurationUtils.readObject;
 
 public class CommunityIdProcessor extends AbstractProcessor {
 
     public static final String TYPE = "community_id";
 
-    private final String field;
+    private final List<String> fields;
     private final String targetField;
 
-    public CommunityIdProcessor(String tag, String field, String targetField) throws IOException {
+    public CommunityIdProcessor(String tag, List<String> field, String targetField) throws IOException {
         super(tag);
-        this.field = field;
+        this.fields = new ArrayList<>(field);
         this.targetField = targetField;
     }
 
     @Override
     public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
         CommunityIdGenerator generator = new CommunityIdGenerator();
-        String content = ingestDocument.getFieldValue(field, String.class);
+        String sourceIp = ingestDocument.getFieldValue(fields.get(0), String.class);
+        String sourcePort = ingestDocument.getFieldValue(fields.get(1), String.class);
+        String destinationIp = ingestDocument.getFieldValue(fields.get(2), String.class);
+        String destinationPort = ingestDocument.getFieldValue(fields.get(3), String.class);
+
         String result = generator.generateCommunityId(Protocol.UDP,
-                InetAddress.getByName("192.168.1.52"), 54585, InetAddress.getByName("8.8.8.8"), 53);
+                InetAddress.getByName(sourceIp), Integer.parseInt(sourcePort),
+                InetAddress.getByName(destinationIp), Integer.parseInt(destinationPort));
         ingestDocument.setFieldValue(targetField, result);
         return ingestDocument;
     }
@@ -58,14 +66,22 @@ public class CommunityIdProcessor extends AbstractProcessor {
     }
 
     public static final class Factory implements Processor.Factory {
-
         @Override
         public CommunityIdProcessor create(Map<String, Processor.Factory> factories, String tag, Map<String, Object> config)
                 throws Exception {
-            String field = readStringProperty(TYPE, tag, config, "field");
+            final List<String> fields = new ArrayList<>();
+            final Object field = readObject(TYPE, tag, config, "field");
+            if (field instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<String> stringList = (List<String>) field;
+                fields.addAll(stringList);
+            } else {
+                fields.add((String) field);
+            }
+
             String targetField = readStringProperty(TYPE, tag, config, "target_field", "default_field_name");
 
-            return new CommunityIdProcessor(tag, field, targetField);
+            return new CommunityIdProcessor(tag, fields, targetField);
         }
     }
 }

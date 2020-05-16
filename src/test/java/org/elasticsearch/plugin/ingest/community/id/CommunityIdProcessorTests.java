@@ -23,6 +23,8 @@ import org.elasticsearch.test.ESTestCase;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
@@ -31,15 +33,26 @@ public class CommunityIdProcessorTests extends ESTestCase {
 
     public void testThatProcessorWorks() throws Exception {
         Map<String, Object> document = new HashMap<>();
-        document.put("source_field", "fancy source field content");
+        document.put("source_ip", "192.168.1.52");
+        document.put("source_port", "54585");
+        document.put("destination_ip", "8.8.8.8");
+        document.put("destination_port", "53");
+        document.put("transport", "TCP");
+
         IngestDocument ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
 
-        CommunityIdProcessor processor = new CommunityIdProcessor(randomAlphaOfLength(10), "source_field", "target_field");
+        List<String> field = new ArrayList <String>();
+        field.add("source_ip");
+        field.add("source_port");
+        field.add("destination_ip");
+        field.add("destination_port");
+        field.add("transport");
+
+        CommunityIdProcessor processor = new CommunityIdProcessor(randomAlphaOfLength(10), field, "target_field");
         Map<String, Object> data = processor.execute(ingestDocument).getSourceAndMetadata();
 
         assertThat(data, hasKey("target_field"));
         assertThat(data.get("target_field"), is("1:d/FP5EW3wiY1vCndhwleRRKHowQ="));
-        // TODO add fancy assertions here
     }
 }
 

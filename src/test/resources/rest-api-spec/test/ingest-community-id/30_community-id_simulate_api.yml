@@ -9,8 +9,8 @@
             "processors": [
               {
                 "community_id" : {
-                  "field" : "field1",
-                  "target_field" : "field2"
+                  "field" : ["source_ip", "source_port", "destination_ip", "destination_port", "transport"],
+                  "target_field" : "community_id"
                 }
               }
             ]
@@ -20,8 +20,12 @@
   - do:
       ingest.simulate:
         id: "my_pipeline"
-        body: {docs: [ { _source: { field1: "some content here" } } ] }
+        body: {docs: [ { _source: { source_ip: "192.168.1.52", source_port: "54585", destination_ip: "8.8.8.8", destination_port: "53", transport: "TCP" } } ] }
 
-  - length: { docs.0.doc._source: 2 }
-  - match: { docs.0.doc._source.field1: "some content here" }
-  - match: { docs.0.doc._source.field2: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
+  - length: { docs.0.doc._source: 6 }
+  - match: { docs.0.doc._source.source_ip: "192.168.1.52" }
+  - match: { docs.0.doc._source.source_port: "54585" }
+  - match: { docs.0.doc._source.destination_ip: "8.8.8.8" }
+  - match: { docs.0.doc._source.destination_port: "53" }
+  - match: { docs.0.doc._source.transport: "TCP" }
+  - match: { docs.0.doc._source.community_id: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
