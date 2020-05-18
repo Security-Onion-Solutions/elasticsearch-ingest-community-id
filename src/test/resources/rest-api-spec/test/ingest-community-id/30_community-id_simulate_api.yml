@@ -1,4 +1,10 @@
 ---
+teardown:
+  - do:
+      ingest.delete_pipeline:
+        id: "my_pipeline"
+        ignore: 404
+---
 "Test community-id processor with simulate API":
   - do:
       ingest.put_pipeline:
@@ -29,3 +35,26 @@
   - match: { docs.0.doc._source.destination_port: "53" }
   - match: { docs.0.doc._source.transport: "UDP" }
   - match: { docs.0.doc._source.community_id: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
+
+---
+"Test community-id processor with incorrect pipeline field":
+  - do:
+      catch: /exception/
+      ingest.simulate:
+        body:  >
+          {
+            "pipeline": {
+              "description": "_description",
+              "processors": [
+                {
+                  "community_id": {
+                    "field": "source-ip",
+                    "target_field": "community_id"
+                  }
+                }
+              ]
+            }
+          }
+  - match: { error.root_cause.0.type: "exception" }
+  - match: { error.root_cause.0.reason: "java.lang.IllegalArgumentException: field should be an Array" }
+  - match: { error.root_cause.0.processor_type: "community_id" }

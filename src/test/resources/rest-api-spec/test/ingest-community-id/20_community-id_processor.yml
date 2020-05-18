@@ -1,4 +1,10 @@
 ---
+teardown:
+  - do:
+      ingest.delete_pipeline:
+        id: "my_pipeline"
+        ignore: 404
+---
 "Test community-id processor with defaults":
   - do:
       ingest.put_pipeline:
@@ -35,3 +41,39 @@
   - match: { _source.transport: "UDP" }
   - match: { _source.community_id: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
 
+---
+"Test community-id processor with nested field":
+  - do:
+      ingest.put_pipeline:
+        id: "my_pipeline"
+        body:  >
+          {
+            "description": "_description",
+            "processors": [
+              {
+                "community_id" : {
+                  "field" : ["source.ip", "source.port", "destination.ip", "destination.port", "transport"],
+                  "target_field" : "community_id"
+                }
+              }
+            ]
+          }
+  - match: { acknowledged: true }
+
+  - do:
+      index:
+        index: test
+        id: 1
+        pipeline: "my_pipeline"
+        body: {source: { ip: "192.168.1.52", port: "54585" }, destination: { ip: "8.8.8.8", port: "53" }, transport: "UDP"}
+
+  - do:
+      get:
+        index: test
+        id: 1
+  - match: { _source.source.ip: "192.168.1.52" }
+  - match: { _source.source.port: "54585" }
+  - match: { _source.destination.ip: "8.8.8.8" }
+  - match: { _source.destination.port: "53" }
+  - match: { _source.transport: "UDP" }
+  - match: { _source.community_id: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
