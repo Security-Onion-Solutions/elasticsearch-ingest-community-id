@@ -22,7 +22,7 @@
         index: test
         id: 1
         pipeline: "my_pipeline"
-        body: {source_ip: "192.168.1.52", source_port: "54585", destination_ip: "8.8.8.8", destination_port: "53", transport: "TCP"}
+        body: {source_ip: "192.168.1.52", source_port: "54585", destination_ip: "8.8.8.8", destination_port: "53", transport: "UDP"}
 
   - do:
       get:
@@ -32,6 +32,6 @@
   - match: { _source.source_port: "54585" }
   - match: { _source.destination_ip: "8.8.8.8" }
   - match: { _source.destination_port: "53" }
-  - match: { _source.transport: "TCP" }
+  - match: { _source.transport: "UDP" }
   - match: { _source.community_id: "1:d/FP5EW3wiY1vCndhwleRRKHowQ=" }
 

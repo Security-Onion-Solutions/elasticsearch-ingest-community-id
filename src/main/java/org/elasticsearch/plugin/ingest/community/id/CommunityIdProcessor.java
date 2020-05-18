@@ -46,18 +46,40 @@ public class CommunityIdProcessor extends AbstractProcessor {
     }
 
     @Override
-    public IngestDocument execute(IngestDocument ingestDocument) throws Exception {
+    public IngestDocument execute(IngestDocument document) throws Exception {
         CommunityIdGenerator generator = new CommunityIdGenerator();
-        String sourceIp = ingestDocument.getFieldValue(fields.get(0), String.class);
-        String sourcePort = ingestDocument.getFieldValue(fields.get(1), String.class);
-        String destinationIp = ingestDocument.getFieldValue(fields.get(2), String.class);
-        String destinationPort = ingestDocument.getFieldValue(fields.get(3), String.class);
 
-        String result = generator.generateCommunityId(Protocol.UDP,
+        if (document.hasField(fields.get(0), true) == false ||
+            document.hasField(fields.get(1), true) == false ||
+            document.hasField(fields.get(2), true) == false ||
+            document.hasField(fields.get(3), true) == false ||
+            document.hasField(fields.get(4), true) == false
+        ) {
+            return document;
+        }
+
+        String sourceIp = document.getFieldValue(fields.get(0), String.class);
+        String sourcePort = document.getFieldValue(fields.get(1), String.class);
+        String destinationIp = document.getFieldValue(fields.get(2), String.class);
+        String destinationPort = document.getFieldValue(fields.get(3), String.class);
+        String protocol = document.getFieldValue(fields.get(4), String.class);
+
+        String result = generator.generateCommunityId(getProtocol(protocol),
                 InetAddress.getByName(sourceIp), Integer.parseInt(sourcePort),
                 InetAddress.getByName(destinationIp), Integer.parseInt(destinationPort));
-        ingestDocument.setFieldValue(targetField, result);
-        return ingestDocument;
+        document.setFieldValue(targetField, result);
+        return document;
+    }
+
+    private Protocol getProtocol(String protocol) {
+        if (protocol.equals("TCP"))
+            return Protocol.TCP;
+        else if (protocol.equals("UDP"))
+            return Protocol.UDP;
+        else if (protocol.equals("SCTP"))
+            return Protocol.SCTP;
+        else
+            return Protocol.TCP;
     }
 
     @Override
@@ -71,12 +93,13 @@ public class CommunityIdProcessor extends AbstractProcessor {
                 throws Exception {
             final List<String> fields = new ArrayList<>();
             final Object field = readObject(TYPE, tag, config, "field");
+
             if (field instanceof List) {
                 @SuppressWarnings("unchecked")
                 List<String> stringList = (List<String>) field;
                 fields.addAll(stringList);
             } else {
-                fields.add((String) field);
+                throw new IllegalArgumentException("field should be an Array");
             }
 
             String targetField = readStringProperty(TYPE, tag, config, "target_field", "default_field_name");
