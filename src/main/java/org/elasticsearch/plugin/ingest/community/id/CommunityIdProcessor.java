@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 import static org.elasticsearch.ingest.ConfigurationUtils.readStringProperty;
 import static org.elasticsearch.ingest.ConfigurationUtils.readObject;
@@ -72,11 +73,11 @@ public class CommunityIdProcessor extends AbstractProcessor {
     }
 
     private Protocol getProtocol(String protocol) {
-        if (protocol.equals("TCP"))
+        if (protocol.toLowerCase(Locale.ROOT).equals("tcp"))
             return Protocol.TCP;
-        else if (protocol.equals("UDP"))
+        else if (protocol.toLowerCase(Locale.ROOT).equals("udp"))
             return Protocol.UDP;
-        else if (protocol.equals("SCTP"))
+        else if (protocol.toLowerCase(Locale.ROOT).equals("sctp"))
             return Protocol.SCTP;
         else
             return Protocol.TCP;
