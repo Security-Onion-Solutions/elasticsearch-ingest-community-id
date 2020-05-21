@@ -32,12 +32,36 @@ import static org.hamcrest.Matchers.is;
 
 public class CommunityIdProcessorTests extends ESTestCase {
 
-    public void testThatProcessorWorks() throws Exception {
+    public void testThatProcessorWorksWithStringPort() throws Exception {
         Map<String, Object> document = new HashMap<>();
         document.put("source_ip", "192.168.1.52");
         document.put("source_port", "54585");
         document.put("destination_ip", "8.8.8.8");
         document.put("destination_port", "53");
+        document.put("transport", "UDP");
+
+        IngestDocument ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
+
+        List<String> field = new ArrayList <String>();
+        field.add("source_ip");
+        field.add("source_port");
+        field.add("destination_ip");
+        field.add("destination_port");
+        field.add("transport");
+
+        CommunityIdProcessor processor = new CommunityIdProcessor(randomAlphaOfLength(10), field, "target_field");
+        Map<String, Object> data = processor.execute(ingestDocument).getSourceAndMetadata();
+
+        assertThat(data, hasKey("target_field"));
+        assertThat(data.get("target_field"), is("1:d/FP5EW3wiY1vCndhwleRRKHowQ="));
+    }
+
+    public void testThatProcessorWorksWithIntegerPort() throws Exception {
+        Map<String, Object> document = new HashMap<>();
+        document.put("source_ip", "192.168.1.52");
+        document.put("source_port", 54585);
+        document.put("destination_ip", "8.8.8.8");
+        document.put("destination_port", 53);
         document.put("transport", "UDP");
 
         IngestDocument ingestDocument = RandomDocumentPicks.randomIngestDocument(random(), document);
