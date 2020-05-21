@@ -60,14 +60,14 @@ public class CommunityIdProcessor extends AbstractProcessor {
         }
 
         String sourceIp = document.getFieldValue(fields.get(0), String.class);
-        String sourcePort = document.getFieldValue(fields.get(1), String.class);
+        Integer sourcePort = getPort(fields.get(1), document);
         String destinationIp = document.getFieldValue(fields.get(2), String.class);
-        String destinationPort = document.getFieldValue(fields.get(3), String.class);
+        Integer destinationPort = getPort(fields.get(3), document);
         String protocol = document.getFieldValue(fields.get(4), String.class);
 
         String result = generator.generateCommunityId(getProtocol(protocol),
-                InetAddress.getByName(sourceIp), Integer.parseInt(sourcePort),
-                InetAddress.getByName(destinationIp), Integer.parseInt(destinationPort));
+                InetAddress.getByName(sourceIp), sourcePort,
+                InetAddress.getByName(destinationIp), destinationPort);
         document.setFieldValue(targetField, result);
         return document;
     }
@@ -81,6 +81,17 @@ public class CommunityIdProcessor extends AbstractProcessor {
             return Protocol.SCTP;
         else
             return Protocol.TCP;
+    }
+
+    private Integer getPort(String portField, IngestDocument document) {
+        Integer port;
+        try {
+            port = document.getFieldValue(portField, Integer.class);
+        } catch (Exception e) {
+            String temp = document.getFieldValue(portField, String.class);
+            port = Integer.parseInt(temp);
+        }
+        return port;
     }
 
     @Override
